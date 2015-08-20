@@ -39,6 +39,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
+import hudson.util.DescribableList;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.beanutils.ConvertUtils;
@@ -80,14 +82,15 @@ public class CoberturaPublisher extends Recorder {
 
     private final SourceEncoding sourceEncoding;
 
+    private final String updateCoverageMetricJobName;
     /**
      * @param coberturaReportFile the report directory
      * @stapler-constructor
      */
     @DataBoundConstructor
-    public CoberturaPublisher(String coberturaReportFile, boolean onlyStable, boolean failUnhealthy, boolean failUnstable, 
+    public CoberturaPublisher(String coberturaReportFile, boolean onlyStable, boolean failUnhealthy, boolean failUnstable,
             boolean autoUpdateHealth, boolean autoUpdateStability, boolean zoomCoverageChart, boolean failNoReports, SourceEncoding sourceEncoding,
-            int maxNumberOfBuilds) {
+            int maxNumberOfBuilds,String updateCoverageMetricJobName) {
         this.coberturaReportFile = coberturaReportFile;
         this.onlyStable = onlyStable;
         this.failUnhealthy = failUnhealthy;
@@ -101,6 +104,7 @@ public class CoberturaPublisher extends Recorder {
         this.healthyTarget = new CoverageTarget();
         this.unhealthyTarget = new CoverageTarget();
         this.failingTarget = new CoverageTarget();
+        this.updateCoverageMetricJobName = updateCoverageMetricJobName;
     }
 
     /**
@@ -303,6 +307,14 @@ public class CoberturaPublisher extends Recorder {
     }
 
     /**
+     * Getter for property 'updateCoverageMetricJobName'
+     * @return Value for property 'updateCoverageMetricJobName'.
+     */
+    public String getUpdateCoverageMetricJobName() {
+        return updateCoverageMetricJobName;
+    }
+
+    /**
      * Gets the directory where the Cobertura Report is stored for the given project.
      */
     /*package*/
@@ -447,6 +459,15 @@ public class CoberturaPublisher extends Recorder {
                 if (getAutoUpdateStability()) {
                     setNewPercentages(result, false, listener);
                 }
+
+                if(updateCoverageMetricJobName != null && !(updateCoverageMetricJobName.isEmpty())) {
+                    try{
+                        setNewPercentagesOtherJob(result, updateCoverageMetricJobName, listener);
+                    }catch (IOException e){
+                        Util.displayIOException(e,listener);
+                        e.printStackTrace(listener.fatalError("Unable to find coverage results for " + updateCoverageMetricJobName));
+                    }
+                }
             }
         } else {
             listener.getLogger().println("No coverage results were successfully parsed.  Did you generate "
@@ -482,6 +503,51 @@ public class CoberturaPublisher extends Recorder {
                     } else {
                         failingTarget.setTarget(metric, (int) (newPercent * 1000f));
                         listener.getLogger().println("    " + metric.getName() + "'s new stability minimum is: " + roundDecimalFloat(newPercent));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Changes another job ( jobName ) coverage metrics.
+     */
+    private void setNewPercentagesOtherJob(CoverageResult result, String jobName, BuildListener listener) throws IOException {
+        AbstractProject<?,?> job = Jenkins.getInstance().getItemByFullName(jobName, AbstractProject.class);
+        DescribableList rootPublishers =  job.getPublishersList();
+        int targetValue;
+        if(rootPublishers != null){
+            CoberturaPublisher coberturaPublisher = (CoberturaPublisher)rootPublishers.get(CoberturaPublisher.class);
+
+            if(coberturaPublisher != null) {
+                CoverageTarget otherJobHealthyTarget = coberturaPublisher.getHealthyTarget();
+                CoverageTarget otherJobUnhealthyTarget = coberturaPublisher.getUnhealthyTarget();
+                CoverageTarget otherJobFailingTarget = coberturaPublisher.getFailingTarget();
+                Set<CoverageMetric> healthyMetrics = healthyTarget.getAllMetrics(result);
+                Set<CoverageMetric> unHealthyMetrics = unhealthyTarget.getAllMetrics(result);
+                Set<CoverageMetric> failingMetrics = failingTarget.getAllMetrics(result);
+
+                if (!healthyMetrics.isEmpty()) {
+                    for (CoverageMetric metric : healthyMetrics) {
+                        targetValue = healthyTarget.getTarget(metric);
+                        otherJobHealthyTarget.setTarget(metric, targetValue);
+                        listener.getLogger().println("   Job: " + jobName + ",  " + metric.getName() + "'s new healthy target is: " + targetValue);
+                    }
+                }
+
+                if (!unHealthyMetrics.isEmpty()) {
+                    for (CoverageMetric metric : unHealthyMetrics) {
+                        targetValue = unhealthyTarget.getTarget(metric);
+                        otherJobUnhealthyTarget.setTarget(metric,targetValue);
+                        listener.getLogger().println("   Job: " + jobName + ",  " + metric.getName() + "'s new unhealthy target is: " + targetValue);
+                    }
+                }
+
+                if (!failingMetrics.isEmpty()) {
+                    for (CoverageMetric metric : failingMetrics) {
+                        targetValue = failingTarget.getTarget(metric);
+                        otherJobFailingTarget.setTarget(metric,targetValue);
+                        listener.getLogger().println("   Job: " + jobName + ",  " + metric.getName() + "'s new failing target is: " + targetValue);
                     }
                 }
             }
