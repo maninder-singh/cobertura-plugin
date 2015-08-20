@@ -41,7 +41,10 @@
              description="${%source.encoding.description}" field="sourceEncoding">
             <f:enum>${it.encodingName}</f:enum>
         </f:entry>      
-
+        <f:entry title="${%Job Name of Update Coverage Metric}"
+             description="${%update.coverage.metric.job.name}">
+             <f:textbox name="cobertura.updateCoverageMetricJobName" value="${instance.updateCoverageMetricJobName}" />
+        </f:entry>
         <f:entry title="${%Coverage Metric Targets}"
              description="${%metric.targets.description(rootURL)}">
             <f:repeatable var="inst" varStatus="instStatus" items="${descriptor.getTargets(instance)}">

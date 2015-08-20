@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.netbeans.modules:org-netbeans-insane:RELEASE72">
+    <CLASSES>
+      <root url="jar://$M2_REPO$/org/netbeans/modules/org-netbeans-insane/RELEASE72/org-netbeans-insane-RELEASE72.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$M2_REPO$/org/netbeans/modules/org-netbeans-insane/RELEASE72/org-netbeans-insane-RELEASE72-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$M2_REPO$/org/netbeans/modules/org-netbeans-insane/RELEASE72/org-netbeans-insane-RELEASE72-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

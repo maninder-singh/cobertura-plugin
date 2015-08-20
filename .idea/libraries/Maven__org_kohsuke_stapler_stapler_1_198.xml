@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.kohsuke.stapler:stapler:1.198">
+    <CLASSES>
+      <root url="jar://$M2_REPO$/org/kohsuke/stapler/stapler/1.198/stapler-1.198.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$M2_REPO$/org/kohsuke/stapler/stapler/1.198/stapler-1.198-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$M2_REPO$/org/kohsuke/stapler/stapler/1.198/stapler-1.198-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
